@@ -1,11 +1,11 @@
 ---
-title: 'Exercise 01: Set Up Your Development Environment'
+title: 'Exercise 01: Set up your development environment'
 layout: default
 nav_order: 2
 has_children: true
 ---
 
-# Exercise 01: Set Up Your Development Environment
+# Exercise 01: Set up your development environment
 
 ## Scenario
 
