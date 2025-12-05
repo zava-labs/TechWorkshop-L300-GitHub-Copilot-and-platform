@@ -26,13 +26,13 @@ jobs:
 
     - name: Log in to Azure Container Registry
       run: |
-        az acr login --name ${{ vars.ACR_NAME }}
+        az acr login --name ${{ vars.AZURE_CONTAINER_REGISTRY }}
 
     - name: Build and push Docker image
       working-directory: ./src
       run: |
         az acr build \
-          --registry ${{ vars.ACR_NAME }} \
+          --registry ${{ vars.AZURE_CONTAINER_REGISTRY }} \
           --image zavastore:${{ github.sha }} \
           --image zavastore:latest \
           --file Dockerfile \
@@ -43,8 +43,8 @@ jobs:
         az webapp config container set \
           --name ${{ env.AZURE_WEBAPP_NAME }} \
           --resource-group ${{ vars.RESOURCE_GROUP_NAME }} \
-          --docker-custom-image-name ${{ vars.ACR_NAME }}.azurecr.io/zavastore:${{ github.sha }} \
-          --docker-registry-server-url https://${{ vars.ACR_NAME }}.azurecr.io
+          --docker-custom-image-name ${{ vars.AZURE_CONTAINER_REGISTRY }}.azurecr.io/zavastore:${{ github.sha }} \
+          --docker-registry-server-url https://${{ vars.AZURE_CONTAINER_REGISTRY }}.azurecr.io
 
     - name: Restart App Service
       run: |
