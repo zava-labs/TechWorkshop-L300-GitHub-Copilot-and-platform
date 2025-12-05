@@ -8,9 +8,6 @@ on:
     branches: [ '*' ]
   workflow_dispatch:
 
-env:
-  AZURE_WEBAPP_NAME: app-zavastore-dev
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -41,7 +38,7 @@ jobs:
     - name: Deploy to Azure App Service
       run: |
         az webapp config container set \
-          --name ${{ env.AZURE_WEBAPP_NAME }} \
+          --name ${{ vars.AZURE_APP_SERVICE_NAME }} \
           --resource-group ${{ vars.RESOURCE_GROUP_NAME }} \
           --docker-custom-image-name ${{ vars.AZURE_CONTAINER_REGISTRY }}.azurecr.io/zavastore:${{ github.sha }} \
           --docker-registry-server-url https://${{ vars.AZURE_CONTAINER_REGISTRY }}.azurecr.io
@@ -49,5 +46,5 @@ jobs:
     - name: Restart App Service
       run: |
         az webapp restart \
-          --name ${{ env.AZURE_WEBAPP_NAME }} \
+          --name ${{ vars.AZURE_APP_SERVICE_NAME }} \
           --resource-group ${{ vars.RESOURCE_GROUP_NAME }}
