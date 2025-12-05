@@ -26,8 +26,8 @@ jobs:
         az acr login --name ${{ vars.AZURE_CONTAINER_REGISTRY }}
 
     - name: Build and push Docker image
-      working-directory: ./src
       run: |
+        cd src
         az acr build \
           --registry ${{ vars.AZURE_CONTAINER_REGISTRY }} \
           --image zavastore:${{ github.sha }} \
