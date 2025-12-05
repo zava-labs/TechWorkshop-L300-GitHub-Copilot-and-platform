@@ -47,6 +47,7 @@ var acrName = 'acr${applicationName}${environmentName}${resourceToken}'
 var appServicePlanName = 'asp-${applicationName}-${environmentName}'
 var webAppName = 'app-${applicationName}-${environmentName}'
 var appInsightsName = 'appi-${applicationName}-${environmentName}'
+var aiServicesName = 'ai-${applicationName}-${environmentName}'
 
 // Common tags for all resources
 var tags = {
@@ -57,6 +58,9 @@ var tags = {
 
 // AcrPull role definition ID
 var acrPullRoleId = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
+
+// Cognitive Services OpenAI User role definition ID
+var cognitiveServicesOpenAIUserId = '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
 
 // Deploy Container Registry
 module containerRegistry 'modules/container-registry.bicep' = {
@@ -118,6 +122,42 @@ module acrPullRoleAssignment 'modules/role-assignment.bicep' = {
   }
 }
 
+// Deploy Azure AI Services with gpt-4o-mini model
+module aiServices 'modules/ai-services.bicep' = {
+  name: 'aiServices'
+  params: {
+    name: aiServicesName
+    location: location
+    tags: tags
+    sku: 'S0'
+    deployments: [
+      {
+        name: 'gpt-4o-mini'
+        model: {
+          format: 'OpenAI'
+          name: 'gpt-4o-mini'
+          version: '2024-07-18'
+        }
+        sku: {
+          name: 'Standard'
+          capacity: 8
+        }
+      }
+    ]
+  }
+}
+
+// Assign Cognitive Services OpenAI User role to Web App for AI access
+module aiServicesRoleAssignment 'modules/role-assignment.bicep' = {
+  name: 'aiServicesRoleAssignment'
+  params: {
+    principalId: webApp.outputs.principalId
+    roleDefinitionId: cognitiveServicesOpenAIUserId
+    principalType: 'ServicePrincipal'
+    scope: aiServices.outputs.id
+  }
+}
+
 // Outputs for reference and CI/CD pipelines
 @description('The name of the Container Registry')
 output containerRegistryName string = containerRegistry.outputs.name
@@ -136,3 +176,9 @@ output appInsightsName string = appInsights.outputs.name
 
 @description('The resource group name')
 output resourceGroupName string = resourceGroup().name
+
+@description('The name of the AI Services resource')
+output aiServicesName string = aiServices.outputs.name
+
+@description('The endpoint of the AI Services resource')
+output aiServicesEndpoint string = aiServices.outputs.endpoint

@@ -1,0 +1,139 @@
+@{
+    ViewData["Title"] = "Chat Assistant";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-chat-dots me-2"></i>Zava Chat Assistant
+                    </h5>
+                    <small>Powered by Azure AI</small>
+                </div>
+                <div class="card-body">
+                    <div id="chatMessages" class="border rounded p-3 mb-3" 
+                         style="height: 400px; overflow-y: auto; background-color: #f8f9fa;">
+                        <div class="text-center text-muted" id="welcomeMessage">
+                            <i class="bi bi-robot" style="font-size: 3rem;"></i>
+                            <p class="mt-2">Welcome! I'm your Zava shopping assistant.</p>
+                            <p>Ask me anything about our products or services!</p>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" 
+                               id="userMessage" 
+                               class="form-control" 
+                               placeholder="Type your message here..." 
+                               autocomplete="off" />
+                        <button class="btn btn-primary" id="sendButton" type="button">
+                            <i class="bi bi-send me-1"></i>Send
+                        </button>
+                    </div>
+                    <div id="loadingIndicator" class="text-center mt-2 d-none">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <span class="ms-2 text-muted">Thinking...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const chatMessages = document.getElementById('chatMessages');
+            const userMessageInput = document.getElementById('userMessage');
+            const sendButton = document.getElementById('sendButton');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const welcomeMessage = document.getElementById('welcomeMessage');
+
+            function addMessage(content, isUser) {
+                // Hide welcome message on first message
+                if (welcomeMessage) {
+                    welcomeMessage.style.display = 'none';
+                }
+
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `d-flex mb-3 ${isUser ? 'justify-content-end' : 'justify-content-start'}`;
+                
+                const bubbleClass = isUser ? 'bg-primary text-white' : 'bg-white border';
+                const icon = isUser ? 'bi-person-fill' : 'bi-robot';
+                
+                messageDiv.innerHTML = `
+                    <div class="d-flex ${isUser ? 'flex-row-reverse' : 'flex-row'}" style="max-width: 80%;">
+                        <div class="rounded-circle ${isUser ? 'bg-primary ms-2' : 'bg-secondary me-2'} d-flex align-items-center justify-content-center" 
+                             style="width: 32px; height: 32px; flex-shrink: 0;">
+                            <i class="${icon} text-white" style="font-size: 0.9rem;"></i>
+                        </div>
+                        <div class="rounded p-2 ${bubbleClass}" style="white-space: pre-wrap; word-wrap: break-word;">
+                            ${escapeHtml(content)}
+                        </div>
+                    </div>
+                `;
+                
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            function setLoading(isLoading) {
+                loadingIndicator.classList.toggle('d-none', !isLoading);
+                sendButton.disabled = isLoading;
+                userMessageInput.disabled = isLoading;
+            }
+
+            async function sendMessage() {
+                const message = userMessageInput.value.trim();
+                if (!message) return;
+
+                addMessage(message, true);
+                userMessageInput.value = '';
+                setLoading(true);
+
+                try {
+                    const response = await fetch('/Chat/SendMessage', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: message })
+                    });
+
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        addMessage(data.response, false);
+                    } else {
+                        addMessage(data.error || 'Sorry, an error occurred. Please try again.', false);
+                    }
+                } catch (error) {
+                    console.error('Chat error:', error);
+                    addMessage('Sorry, I couldn\'t connect to the server. Please try again.', false);
+                }
+
+                setLoading(false);
+                userMessageInput.focus();
+            }
+
+            sendButton.addEventListener('click', sendMessage);
+            
+            userMessageInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            // Focus input on page load
+            userMessageInput.focus();
+        });
+    </script>
+}
