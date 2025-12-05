@@ -31,7 +31,7 @@ jobs:
           --registry ${{ vars.AZURE_CONTAINER_REGISTRY }} \
           --image zavastore:${{ github.sha }} \
           --image zavastore:latest \
-          --file ./src/Dockerfile \
+          --file Dockerfile \
           ./src
 
     - name: Deploy to Azure App Service
